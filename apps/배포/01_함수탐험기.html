@@ -88,26 +88,61 @@
   .leg i { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--accent); vertical-align: middle; margin-right: 6px; }
   .leg i.t { border-top-style: dashed; border-color: var(--target); }
   .leg i.s { border-color: var(--ok); }
-  .timer { margin-left: auto; display: flex; align-items: baseline; gap: 14px; font-variant-numeric: tabular-nums; }
-  .timer b { font-family: "Gowun Batang", serif; font-size: clamp(26px, 3vw, 38px); font-weight: 700; color: var(--target); letter-spacing: 0.02em; }
-  .timer span { color: var(--ink-2); font-weight: 500; }
   .race { margin-top: 16px; padding: 16px 18px; background: var(--paper-2); border-left: 4px solid var(--accent); }
   .race h2 { font-family: "Gowun Batang", serif; margin: 0 0 6px; font-size: 1.15em; }
   .race p { margin: 0 0 10px; color: var(--ink-2); font-size: 0.95em; }
   .race input[type=text] { font: inherit; padding: 7px 10px; border: 1.5px solid var(--rule); background: var(--paper); color: var(--ink); border-radius: 4px; width: 9em; }
-  .race .prog { font-family: "Gowun Batang", serif; font-size: 1.3em; font-weight: 700; }
-  .result table { margin-top: 10px; font-size: 0.95em; }
-  .result td, .result th { text-align: left; }
-  .result td:last-child, .result th:last-child { text-align: right; }
-  .result img { display: block; max-width: 100%; margin-top: 12px; border: 1px solid var(--rule); }
-  .result .total { font-family: "Gowun Batang", serif; font-size: 1.6em; font-weight: 700; color: var(--target); }
+
+  /* ---- 레이스 아레나 (전체 화면) ---- */
+  body.racing { overflow: hidden; }
+  #arena { position: fixed; inset: 0; z-index: 50; background: var(--paper); color: var(--ink); display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+  .ar-top { display: flex; align-items: center; gap: clamp(12px, 2vw, 28px); padding: 10px clamp(14px, 2.5vw, 28px); border-bottom: 2px solid var(--ink); }
+  .dots { display: flex; gap: 8px; }
+  .dots i { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid var(--ink-2); box-sizing: border-box; transition: background .25s, border-color .25s, transform .25s; }
+  .dots i.on { background: var(--ok); border-color: var(--ok); }
+  .dots i.cur { border-color: var(--target); transform: scale(1.2); }
+  .ar-prog { font-family: "Gowun Batang", serif; font-weight: 700; font-size: clamp(18px, 2.2vw, 26px); font-variant-numeric: tabular-nums; }
+  .ar-name { color: var(--ink-2); font-weight: 500; }
+  .ar-clock { margin-left: auto; font-family: "Gowun Batang", serif; font-weight: 700; font-size: clamp(30px, 5vw, 60px); color: var(--target); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; line-height: 1; }
+  .ar-main { display: grid; grid-template-columns: minmax(0, 1fr) clamp(260px, 32vw, 440px); gap: clamp(16px, 3vw, 40px); padding: clamp(10px, 2vh, 24px) clamp(14px, 3vw, 40px); min-height: 0; align-items: center; }
+  #rcv { display: block; width: min(100%, calc(100dvh - 130px)); aspect-ratio: 1; margin: 0 auto; border: 1px solid var(--rule); background: var(--paper); }
+  .ar-ctl .formula { font-size: clamp(30px, 4vw, 54px); margin: 0 0 clamp(10px, 2vh, 28px); }
+  .ar-ctl .ctl { grid-template-columns: 2.2em 1fr 3.4em; margin: clamp(6px, 1.5vh, 16px) 0 clamp(14px, 3vh, 30px); }
+  .ar-ctl .ctl label { font-size: 2em; }
+  .ar-ctl .ctl output { font-size: 1.6em; font-weight: 700; }
+  .ar-ctl input[type=range] { -webkit-appearance: none; appearance: none; height: 48px; background: transparent; margin: 0; }
+  .ar-ctl input[type=range]::-webkit-slider-runnable-track { height: 10px; border-radius: 5px; background: var(--rule); }
+  .ar-ctl input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 38px; height: 38px; border-radius: 50%; background: var(--accent); border: 4px solid var(--paper); box-shadow: 0 0 0 2px var(--accent); margin-top: -14px; }
+  .ar-ctl input[type=range]::-moz-range-track { height: 10px; border-radius: 5px; background: var(--rule); }
+  .ar-ctl input[type=range]::-moz-range-thumb { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); border: 4px solid var(--paper); box-shadow: 0 0 0 2px var(--accent); }
+  .ar-ctl input[type=range]:focus-visible { outline: 3px solid var(--target); outline-offset: 4px; border-radius: 6px; }
+  .ar-tip { color: var(--ink-2); font-size: 0.95em; margin: 0; }
+  @media (orientation: portrait), (max-width: 700px) {
+    .ar-main { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; align-items: start; }
+    #rcv { width: min(100%, calc(100dvh - 330px)); }
+    .ar-name { display: none; }
+  }
+  #arFlash { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; font-family: "Gowun Batang", serif; font-weight: 700; font-size: clamp(64px, 14vw, 160px); color: var(--ok); opacity: 0; text-shadow: 0 2px 0 var(--paper); }
+  #arFlash.go { animation: flash .75s cubic-bezier(.2,.8,.2,1) both; }
+  #arFlash.cd { color: var(--target); }
+  @keyframes flash { 0% { opacity: 0; transform: scale(.5); } 20% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: scale(1.15); } }
+  @media (prefers-reduced-motion: reduce) { #arFlash.go { animation-duration: .01s; } .dots i { transition: none; } }
+  #arDone { position: absolute; inset: 0; background: var(--paper); overflow: auto; padding: clamp(20px, 4vh, 48px) clamp(16px, 4vw, 48px); }
+  .done { max-width: 720px; margin: 0 auto; }
+  .done h2 { font-family: "Gowun Batang", serif; font-size: clamp(26px, 3.5vw, 40px); margin: 0 0 4px; }
+  .done .sub { color: var(--ink-2); margin: 0 0 20px; }
+  .done .total { font-family: "Gowun Batang", serif; font-size: clamp(48px, 9vw, 96px); font-weight: 700; color: var(--target); line-height: 1; font-variant-numeric: tabular-nums; margin: 0 0 24px; }
+  .done table { font-size: 1.05em; }
+  .done td, .done th { text-align: left; }
+  .done td:last-child, .done th:last-child { text-align: right; }
+  .done td:nth-child(2) { font-family: "Gowun Batang", serif; font-weight: 700; font-size: 1.15em; }
+  .done img { display: block; max-width: 100%; margin-top: 16px; border: 1px solid var(--rule); }
 </style>
 
 <div class="wrap">
   <header>
     <h1>함수 탐험기</h1>
-    <div class="std" id="stdTags"><span>9수02-15</span><span>9수02-16</span><span>9수02-22</span></div>
-    <div class="timer" id="timer" hidden><span id="tProg">1 / 5</span><b id="tClock">0:00.0</b></div>
+    <div class="std"><span>9수02-15</span><span>9수02-16</span><span>9수02-22</span></div>
   </header>
 
   <div class="tabs" role="tablist">
@@ -144,16 +179,30 @@
           <input type="text" id="raceName" placeholder="이름 (선택)" maxlength="20" autocomplete="off">
           <button class="btn primary" id="raceStart">레이스 시작</button>
         </div>
-        <div class="row" id="raceLive" hidden>
-          <span class="prog" id="raceProg"></span>
-          <span class="msg ok" id="raceMsg"></span>
-          <button class="btn" id="raceQuit">그만하기</button>
-        </div>
-        <div class="result" id="raceResult" hidden></div>
       </section>
       <p class="hint">활동 예시: "기울기가 커지면 그래프는 어떻게 변할까?", "b만 바꾸면 무엇이 그대로일까?", 이차함수에서 "a의 부호와 최댓값·최솟값의 관계"를 말로 설명해 보기.</p>
     </div>
   </div>
+</div>
+
+<div id="arena" hidden>
+  <div class="ar-top">
+    <div class="dots" id="arDots" aria-label="진행"></div>
+    <span class="ar-prog" id="arProg"></span>
+    <span class="ar-name" id="arName"></span>
+    <b class="ar-clock" id="arClock">0:00.0</b>
+    <button class="btn" id="arQuit" title="레이스 나가기 (Esc)">나가기</button>
+  </div>
+  <div class="ar-main">
+    <canvas id="rcv" width="700" height="700" aria-label="레이스 그래프"></canvas>
+    <div class="ar-ctl">
+      <p class="formula" id="arFormula"></p>
+      <div id="arCtl"></div>
+      <p class="ar-tip">점선 그래프와 똑같아지면 바로 다음 문제</p>
+    </div>
+  </div>
+  <div id="arFlash" aria-live="polite"></div>
+  <div id="arDone" hidden></div>
 </div>
 
 <script>
@@ -245,10 +294,11 @@
   }
 
   // ---- 그래프 ----
-  function render() {
+  function drawScene(c) {
+    const ctx = c.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
-    const W = cv.clientWidth || 700;
-    if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = W * dpr; }
+    const W = c.clientWidth || 700;
+    if (c.width !== W * dpr) { c.width = W * dpr; c.height = W * dpr; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, W);
     const u = W / (2 * R), X = x => W / 2 + x * u, Y = y => W / 2 - y * u;
@@ -306,10 +356,14 @@
       ctx.save(); ctx.strokeStyle = css('--accent'); ctx.setLineDash([4, 6]); ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(X(P.p), 0); ctx.lineTo(X(P.p), W); ctx.stroke(); ctx.restore();
     }
-
+  }
+  function render() {
+    const P = S[S.mode];
+    drawScene(cv);
     document.getElementById('formula').textContent = formulaText(S.mode, P);
     for (const p of PARAMS[S.mode]) document.getElementById('o_' + p.k).textContent = fmt(P[p.k]);
     buildFacts(); buildTable();
+    if (!arena.hidden) syncArena();
   }
 
   // ---- 탭 ----
@@ -364,53 +418,93 @@
     } while (PARAMS[S.mode].every(p => T[p.k] === cur[p.k]));
     return T;
   }
-  function showRaceUI(live) {
-    $('raceSetup').hidden = live; $('raceLive').hidden = !live;
-    $('timer').hidden = !live; $('stdTags').hidden = live;
-    $('newQ').disabled = live; if (live) $('checkQ').disabled = true;
+  const arena = $('arena'), rcv = $('rcv');
+  function buildArenaControls() {
+    const box = $('arCtl'); box.innerHTML = '';
+    for (const p of PARAMS[S.mode]) {
+      const row = document.createElement('div'); row.className = 'ctl';
+      row.innerHTML = `<label for="ar_${p.k}">${p.k}</label>
+        <input type="range" id="ar_${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${S[S.mode][p.k]}">
+        <output id="aro_${p.k}"></output>`;
+      box.appendChild(row);
+      row.querySelector('input').addEventListener('input', e => {
+        if (!race || !race.live) { e.target.value = S[S.mode][p.k]; return; }
+        let v = parseFloat(e.target.value);
+        if (S.mode === 'quad' && p.k === 'a' && v === 0) { v = e.target.dataset.prev > 0 ? -0.25 : 0.25; e.target.value = v; }
+        e.target.dataset.prev = v; S[S.mode][p.k] = v; render(); raceCheck();
+      });
+    }
+  }
+  function syncArena() {
+    drawScene(rcv);
+    const P = S[S.mode];
+    $('arFormula').textContent = formulaText(S.mode, P);
+    for (const p of PARAMS[S.mode]) { const i = $('ar_' + p.k); if (i) { i.value = P[p.k]; $('aro_' + p.k).textContent = fmt(P[p.k]); } }
+  }
+  function flash(text, cls = '') { const f = $('arFlash'); f.textContent = text; f.className = cls; void f.offsetWidth; f.classList.add('go'); }
+  function setDots() {
+    $('arDots').innerHTML = Array.from({ length: RACE_N }, (_, i) => `<i class="${i < race.idx ? 'on' : i === race.idx ? 'cur' : ''}"></i>`).join('');
+    $('arProg').textContent = race.idx < RACE_N ? `${race.idx + 1} / ${RACE_N}` : '완주';
   }
   function raceStart() {
-    const t = performance.now();
-    race = { idx: 0, results: [], start: t, qStart: t, mode: S.mode, name: $('raceName').value.trim(), tick: null };
-    $('raceResult').hidden = true; $('raceResult').innerHTML = ''; $('raceMsg').textContent = ''; setMsg('');
-    showRaceUI(true);
+    race = { idx: 0, results: [], mode: S.mode, name: $('raceName').value.trim(), live: false, start: 0, qStart: 0, tick: null, cd: null };
+    S.target = null; setMsg(''); $('checkQ').disabled = true;
+    arena.hidden = false; $('arDone').hidden = true; $('arDone').innerHTML = ''; document.body.classList.add('racing');
+    $('arName').textContent = race.name; $('arClock').textContent = '0:00.0';
+    buildArenaControls(); setDots(); render();
+    document.documentElement.requestFullscreen?.().catch?.(() => {});
+    let n = 3;
+    const step = () => {
+      if (!race) return;
+      if (n > 0) { flash(String(n), 'cd'); n--; race.cd = setTimeout(step, 800); }
+      else { flash('시작!'); raceGo(); }
+    };
+    step();
+  }
+  function raceGo() {
+    race.live = true; race.start = performance.now();
     raceNext();
-    race.tick = setInterval(() => { if (race) $('tClock').textContent = fmtT(performance.now() - race.start); }, 100);
+    race.tick = setInterval(() => { if (race && race.live) $('arClock').textContent = fmtT(performance.now() - race.start); }, 100);
   }
-  function raceNext() {
-    S.target = randTarget(); race.qStart = performance.now();
-    $('legT').hidden = false;
-    $('raceProg').textContent = `${race.idx + 1} / ${RACE_N} 문제`; $('tProg').textContent = `${race.idx + 1} / ${RACE_N}`;
-    render();
-  }
+  function raceNext() { S.target = randTarget(); race.qStart = performance.now(); setDots(); render(); }
   function raceCheck() {
-    if (!race || !S.target) return;
+    if (!race || !race.live || !S.target) return;
     const cur = S[S.mode];
     if (!PARAMS[S.mode].every(p => Math.abs(cur[p.k] - S.target[p.k]) < 1e-9)) return;
     const now = performance.now();
     race.results.push({ formula: formulaText(S.mode, S.target), ms: now - race.qStart });
     race.idx++;
-    if (race.idx < RACE_N) { $('raceMsg').textContent = `정답! ${race.idx}문제 완료`; raceNext(); }
+    if (race.idx < RACE_N) { flash('정답!'); raceNext(); }
     else raceFinish(now);
   }
   function raceFinish(now) {
-    clearInterval(race.tick);
-    const r = race, total = now - r.start; race = null;
-    $('tClock').textContent = fmtT(total); $('tProg').textContent = '완주';
-    S.target = null; $('legT').hidden = true; render();
-    $('raceLive').hidden = true; $('newQ').disabled = false;
-    const box = $('raceResult'); box.hidden = false;
-    box.innerHTML = `<p>완주! 총 <span class="total">${fmtT(total)}</span></p>
+    clearInterval(race.tick); race.live = false;
+    const r = race, total = now - r.start;
+    $('arClock').textContent = fmtT(total); setDots();
+    S.target = null; render();
+    const box = $('arDone'); box.hidden = false;
+    box.innerHTML = `<div class="done">
+      <h2>완주!</h2>
+      <p class="sub">${r.name ? r.name + ' · ' : ''}${r.mode === 'lin' ? '일차함수' : '이차함수'} 5문제</p>
+      <p class="total">${fmtT(total)}</p>
       <table><tr><th>문제</th><th>숨은 그래프</th><th>소요 시간</th></tr>
       ${r.results.map((q, i) => `<tr><td>${i + 1}</td><td>${q.formula}</td><td>${fmtT(q.ms)}</td></tr>`).join('')}</table>
-      <div class="row" style="margin-top:12px"><button class="btn primary" id="shot">결과 이미지 만들기</button><button class="btn" id="raceAgain">다시 도전</button></div>
-      <p class="hint" id="shotHint" hidden>이미지가 자동 저장되지 않으면 아래 이미지를 길게 눌러 저장하거나 화면을 캡처해 제출하세요.</p>`;
+      <div class="row" style="margin-top:20px">
+        <button class="btn primary" id="shot">결과 이미지 만들기</button>
+        <button class="btn" id="raceAgain">다시 도전</button>
+        <button class="btn" id="raceExit">나가기</button>
+      </div>
+      <p class="hint" id="shotHint" hidden>이미지가 자동 저장되지 않으면 아래 이미지를 길게 눌러 저장하거나 화면을 캡처해 제출하세요.</p>
+    </div>`;
     $('shot').addEventListener('click', () => makeShot(r, total));
-    $('raceAgain').addEventListener('click', () => { box.hidden = true; $('timer').hidden = true; $('stdTags').hidden = false; $('raceSetup').hidden = false; });
+    $('raceAgain').addEventListener('click', () => { race = null; raceStart(); });
+    $('raceExit').addEventListener('click', raceQuit);
   }
   function raceQuit() {
-    if (race) { clearInterval(race.tick); race = null; S.target = null; $('legT').hidden = true; render(); }
-    $('raceResult').hidden = true; showRaceUI(false);
+    if (race) { clearTimeout(race.cd); clearInterval(race.tick); race = null; }
+    S.target = null; arena.hidden = true; $('arDone').hidden = true; document.body.classList.remove('racing');
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    $('legT').hidden = true; render();
   }
   function makeShot(r, total) {
     const W = 1000, H = 640, c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
@@ -435,19 +529,21 @@
       g.font = '20px "IBM Plex Sans KR", sans-serif'; g.textAlign = 'right'; g.fillText(fmtT(q.ms), 560, y); g.textAlign = 'left';
       y += 34; g.beginPath(); g.moveTo(40, y); g.lineTo(560, y); g.stroke();
     });
-    g.fillStyle = paper; g.fillRect(600, 150, 360, 360); g.drawImage(cv, 600, 150, 360, 360);
+    g.fillStyle = paper; g.fillRect(600, 150, 360, 360); g.drawImage(rcv, 600, 150, 360, 360);
     g.strokeStyle = ink2; g.strokeRect(600, 150, 360, 360);
     g.fillStyle = ink2; g.font = '14px "IBM Plex Sans KR", sans-serif';
     g.fillText('마지막 문제의 그래프', 600, 518);
     g.fillText('2022 개정 수학과 교육과정 · 9수02-15 · 9수02-16 · 9수02-22', 40, H - 40);
-    const url = c.toDataURL('image/png'), box = $('raceResult');
+    const url = c.toDataURL('image/png'), box = $('arDone').querySelector('.done');
     let img = box.querySelector('img'); if (!img) { img = document.createElement('img'); box.appendChild(img); }
     img.src = url; img.alt = '레이스 결과 요약'; $('shotHint').hidden = false;
     const a = document.createElement('a'); a.href = url; a.download = `함수레이스_${r.name || '결과'}_${fmtT(total).replace(':', 'm')}s.png`;
     document.body.appendChild(a); a.click(); a.remove();
   }
   $('raceStart').addEventListener('click', raceStart);
-  $('raceQuit').addEventListener('click', raceQuit);
+  $('arQuit').addEventListener('click', raceQuit);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !arena.hidden) raceQuit(); });
+  new ResizeObserver(() => { if (!arena.hidden) drawScene(rcv); }).observe(rcv);
 
   buildControls(); render();
   new ResizeObserver(render).observe(cv);
