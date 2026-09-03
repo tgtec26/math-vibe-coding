@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수학 수업 도구 모음</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500&display=swap">
+<style>
+  :root { --paper: oklch(0.975 0.012 85); --ink: oklch(0.24 0.02 60); --ink-2: oklch(0.45 0.02 60); --rule: oklch(0.86 0.014 85); color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) { :root { --paper: oklch(0.21 0.015 60); --ink: oklch(0.93 0.01 85); --ink-2: oklch(0.7 0.015 85); --rule: oklch(0.35 0.015 60); } }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", sans-serif; font-size: 17px; line-height: 1.55; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 24px 64px; }
+  h1 { font-family: "Gowun Batang", serif; font-size: clamp(30px, 5vw, 44px); margin: 0 0 6px; }
+  .sub { color: var(--ink-2); margin: 0 0 32px; border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
+  ol { list-style: none; padding: 0; margin: 0; }
+  li { display: grid; grid-template-columns: 5.5em 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .lv { color: var(--ink-2); font-size: 0.9em; }
+  a { color: inherit; font-family: "Gowun Batang", serif; font-weight: 700; font-size: 1.25em; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .std { display: block; color: var(--ink-2); font-size: 0.85em; font-family: "IBM Plex Sans KR", sans-serif; font-weight: 400; margin-top: 2px; }
+  .more { margin-top: 32px; color: var(--ink-2); font-size: 0.95em; }
+  .more a { font: inherit; text-decoration: underline; }
+</style>
+<main>
+  <h1>수학 수업 도구 모음</h1>
+  <p class="sub">2022 개정 수학과 교육과정 성취기준에 맞춰 바이브 코딩으로 만든 웹 도구. 클릭하면 바로 열립니다.</p>
+  <ol>
+    <li><span class="lv">중2 · 중3</span><div><a href="apps/배포/01_함수탐험기.html">함수 탐험기</a><span class="std">9수02-15, 16, 22 · 일차·이차함수 계수 슬라이더, 숨은 그래프 맞히기</span></div></li>
+    <li><span class="lv">중2</span><div><a href="apps/배포/02_주사위시뮬레이터.html">확률 실험실</a><span class="std">9수04-06 · 주사위 10만 번, 상대도수의 수렴</span></div></li>
+    <li><span class="lv">고 확률과 통계</span><div><a href="apps/배포/03_표본추출시뮬레이터.html">표본과 신뢰구간</a><span class="std">12확통03-05~07 · 표본평균 분포, 신뢰구간 100개</span></div></li>
+    <li><span class="lv">고 인공지능 수학</span><div><a href="apps/배포/04_경사하강법.html">추세선과 경사하강법</a><span class="std">12인수04-02~04 · 손실함수와 접선 기울기</span></div></li>
+  </ol>
+  <p class="more">교육과정 분석과 각 도구를 만든 프롬프트는 <a href="https://github.com/tgtec26/math-vibe-coding">GitHub 저장소</a>에 있습니다.</p>
+</main>
+</html>
