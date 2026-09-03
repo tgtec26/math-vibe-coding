@@ -88,12 +88,26 @@
   .leg i { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--accent); vertical-align: middle; margin-right: 6px; }
   .leg i.t { border-top-style: dashed; border-color: var(--target); }
   .leg i.s { border-color: var(--ok); }
+  .timer { margin-left: auto; display: flex; align-items: baseline; gap: 14px; font-variant-numeric: tabular-nums; }
+  .timer b { font-family: "Gowun Batang", serif; font-size: clamp(26px, 3vw, 38px); font-weight: 700; color: var(--target); letter-spacing: 0.02em; }
+  .timer span { color: var(--ink-2); font-weight: 500; }
+  .race { margin-top: 16px; padding: 16px 18px; background: var(--paper-2); border-left: 4px solid var(--accent); }
+  .race h2 { font-family: "Gowun Batang", serif; margin: 0 0 6px; font-size: 1.15em; }
+  .race p { margin: 0 0 10px; color: var(--ink-2); font-size: 0.95em; }
+  .race input[type=text] { font: inherit; padding: 7px 10px; border: 1.5px solid var(--rule); background: var(--paper); color: var(--ink); border-radius: 4px; width: 9em; }
+  .race .prog { font-family: "Gowun Batang", serif; font-size: 1.3em; font-weight: 700; }
+  .result table { margin-top: 10px; font-size: 0.95em; }
+  .result td, .result th { text-align: left; }
+  .result td:last-child, .result th:last-child { text-align: right; }
+  .result img { display: block; max-width: 100%; margin-top: 12px; border: 1px solid var(--rule); }
+  .result .total { font-family: "Gowun Batang", serif; font-size: 1.6em; font-weight: 700; color: var(--target); }
 </style>
 
 <div class="wrap">
   <header>
     <h1>함수 탐험기</h1>
-    <div class="std"><span>9수02-15</span><span>9수02-16</span><span>9수02-22</span></div>
+    <div class="std" id="stdTags"><span>9수02-15</span><span>9수02-16</span><span>9수02-22</span></div>
+    <div class="timer" id="timer" hidden><span id="tProg">1 / 5</span><b id="tClock">0:00.0</b></div>
   </header>
 
   <div class="tabs" role="tablist">
@@ -121,6 +135,21 @@
           <button class="btn" id="checkQ" disabled>확인</button>
           <span class="msg" id="msg"></span>
         </div>
+      </section>
+
+      <section class="race">
+        <h2>5문제 레이스</h2>
+        <p>숨은 그래프 5개가 차례로 나옵니다. 슬라이더로 맞히면 바로 다음 문제. 끝나면 결과 이미지를 만들어 제출하세요.</p>
+        <div class="row" id="raceSetup">
+          <input type="text" id="raceName" placeholder="이름 (선택)" maxlength="20" autocomplete="off">
+          <button class="btn primary" id="raceStart">레이스 시작</button>
+        </div>
+        <div class="row" id="raceLive" hidden>
+          <span class="prog" id="raceProg"></span>
+          <span class="msg ok" id="raceMsg"></span>
+          <button class="btn" id="raceQuit">그만하기</button>
+        </div>
+        <div class="result" id="raceResult" hidden></div>
       </section>
       <p class="hint">활동 예시: "기울기가 커지면 그래프는 어떻게 변할까?", "b만 바꾸면 무엇이 그대로일까?", 이차함수에서 "a의 부호와 최댓값·최솟값의 관계"를 말로 설명해 보기.</p>
     </div>
@@ -183,7 +212,7 @@
         let v = parseFloat(e.target.value);
         if (S.mode === 'quad' && p.k === 'a' && v === 0) { v = e.target.dataset.prev > 0 ? -0.25 : 0.25; e.target.value = v; }
         e.target.dataset.prev = v;
-        S[S.mode][p.k] = v; render();
+        S[S.mode][p.k] = v; render(); raceCheck();
       });
     }
   }
@@ -285,6 +314,7 @@
 
   // ---- 탭 ----
   document.querySelectorAll('.tabs button').forEach(btn => btn.addEventListener('click', () => {
+    raceQuit();
     document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b === btn));
     S.mode = btn.dataset.mode; S.target = null; setMsg('');
     document.getElementById('legT').hidden = true; document.getElementById('legS').hidden = S.mode !== 'lin';
@@ -322,6 +352,102 @@
     });
     setMsg('아직! ' + hints.join(', '), 'no');
   });
+
+  // ---- 5문제 레이스 ----
+  const RACE_N = 5, $ = id => document.getElementById(id);
+  let race = null;
+  const fmtT = ms => { const s = Math.max(0, ms) / 1000, m = Math.floor(s / 60); return `${m}:${(s - m * 60).toFixed(1).padStart(4, '0')}`; };
+  function randTarget() {
+    const T = {}, cur = S[S.mode];
+    do {
+      for (const p of PARAMS[S.mode]) { do { T[p.k] = rnd(p.min, p.max, p.step); } while (S.mode === 'quad' && p.k === 'a' && T.a === 0); }
+    } while (PARAMS[S.mode].every(p => T[p.k] === cur[p.k]));
+    return T;
+  }
+  function showRaceUI(live) {
+    $('raceSetup').hidden = live; $('raceLive').hidden = !live;
+    $('timer').hidden = !live; $('stdTags').hidden = live;
+    $('newQ').disabled = live; if (live) $('checkQ').disabled = true;
+  }
+  function raceStart() {
+    const t = performance.now();
+    race = { idx: 0, results: [], start: t, qStart: t, mode: S.mode, name: $('raceName').value.trim(), tick: null };
+    $('raceResult').hidden = true; $('raceResult').innerHTML = ''; $('raceMsg').textContent = ''; setMsg('');
+    showRaceUI(true);
+    raceNext();
+    race.tick = setInterval(() => { if (race) $('tClock').textContent = fmtT(performance.now() - race.start); }, 100);
+  }
+  function raceNext() {
+    S.target = randTarget(); race.qStart = performance.now();
+    $('legT').hidden = false;
+    $('raceProg').textContent = `${race.idx + 1} / ${RACE_N} 문제`; $('tProg').textContent = `${race.idx + 1} / ${RACE_N}`;
+    render();
+  }
+  function raceCheck() {
+    if (!race || !S.target) return;
+    const cur = S[S.mode];
+    if (!PARAMS[S.mode].every(p => Math.abs(cur[p.k] - S.target[p.k]) < 1e-9)) return;
+    const now = performance.now();
+    race.results.push({ formula: formulaText(S.mode, S.target), ms: now - race.qStart });
+    race.idx++;
+    if (race.idx < RACE_N) { $('raceMsg').textContent = `정답! ${race.idx}문제 완료`; raceNext(); }
+    else raceFinish(now);
+  }
+  function raceFinish(now) {
+    clearInterval(race.tick);
+    const r = race, total = now - r.start; race = null;
+    $('tClock').textContent = fmtT(total); $('tProg').textContent = '완주';
+    S.target = null; $('legT').hidden = true; render();
+    $('raceLive').hidden = true; $('newQ').disabled = false;
+    const box = $('raceResult'); box.hidden = false;
+    box.innerHTML = `<p>완주! 총 <span class="total">${fmtT(total)}</span></p>
+      <table><tr><th>문제</th><th>숨은 그래프</th><th>소요 시간</th></tr>
+      ${r.results.map((q, i) => `<tr><td>${i + 1}</td><td>${q.formula}</td><td>${fmtT(q.ms)}</td></tr>`).join('')}</table>
+      <div class="row" style="margin-top:12px"><button class="btn primary" id="shot">결과 이미지 만들기</button><button class="btn" id="raceAgain">다시 도전</button></div>
+      <p class="hint" id="shotHint" hidden>이미지가 자동 저장되지 않으면 아래 이미지를 길게 눌러 저장하거나 화면을 캡처해 제출하세요.</p>`;
+    $('shot').addEventListener('click', () => makeShot(r, total));
+    $('raceAgain').addEventListener('click', () => { box.hidden = true; $('timer').hidden = true; $('stdTags').hidden = false; $('raceSetup').hidden = false; });
+  }
+  function raceQuit() {
+    if (race) { clearInterval(race.tick); race = null; S.target = null; $('legT').hidden = true; render(); }
+    $('raceResult').hidden = true; showRaceUI(false);
+  }
+  function makeShot(r, total) {
+    const W = 1000, H = 640, c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
+    const g = c.getContext('2d'); g.scale(2, 2);
+    const paper = css('--paper'), ink = css('--ink'), ink2 = css('--ink-2'), rule = css('--rule'), hot = css('--target');
+    g.fillStyle = paper; g.fillRect(0, 0, W, H);
+    g.textBaseline = 'top'; g.fillStyle = ink; g.font = '700 40px "Gowun Batang", serif';
+    g.fillText('함수 탐험기 · 5문제 레이스', 40, 36);
+    const d = new Date(), p2 = n => String(n).padStart(2, '0');
+    const ds = `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    g.fillStyle = ink2; g.font = '18px "IBM Plex Sans KR", sans-serif';
+    g.fillText(`${r.name || '이름 미입력'}  ·  ${r.mode === 'lin' ? '일차함수 y = ax + b' : '이차함수 y = a(x − p)² + q'}  ·  ${ds}`, 40, 92);
+    g.fillStyle = ink; g.font = '20px "IBM Plex Sans KR", sans-serif'; g.fillText('총 시간', 40, 150);
+    g.fillStyle = hot; g.font = '700 64px "Gowun Batang", serif'; g.fillText(fmtT(total), 40, 176);
+    let y = 280; g.strokeStyle = rule; g.lineWidth = 1;
+    g.fillStyle = ink2; g.font = '15px "IBM Plex Sans KR", sans-serif';
+    g.fillText('문제', 40, y); g.fillText('숨은 그래프', 90, y); g.textAlign = 'right'; g.fillText('소요 시간', 560, y); g.textAlign = 'left';
+    y += 26; g.beginPath(); g.moveTo(40, y); g.lineTo(560, y); g.stroke();
+    r.results.forEach((q, i) => {
+      y += 12; g.fillStyle = ink; g.font = '700 22px "Gowun Batang", serif';
+      g.fillText(String(i + 1), 40, y); g.fillText(q.formula, 90, y);
+      g.font = '20px "IBM Plex Sans KR", sans-serif'; g.textAlign = 'right'; g.fillText(fmtT(q.ms), 560, y); g.textAlign = 'left';
+      y += 34; g.beginPath(); g.moveTo(40, y); g.lineTo(560, y); g.stroke();
+    });
+    g.fillStyle = paper; g.fillRect(600, 150, 360, 360); g.drawImage(cv, 600, 150, 360, 360);
+    g.strokeStyle = ink2; g.strokeRect(600, 150, 360, 360);
+    g.fillStyle = ink2; g.font = '14px "IBM Plex Sans KR", sans-serif';
+    g.fillText('마지막 문제의 그래프', 600, 518);
+    g.fillText('2022 개정 수학과 교육과정 · 9수02-15 · 9수02-16 · 9수02-22', 40, H - 40);
+    const url = c.toDataURL('image/png'), box = $('raceResult');
+    let img = box.querySelector('img'); if (!img) { img = document.createElement('img'); box.appendChild(img); }
+    img.src = url; img.alt = '레이스 결과 요약'; $('shotHint').hidden = false;
+    const a = document.createElement('a'); a.href = url; a.download = `함수레이스_${r.name || '결과'}_${fmtT(total).replace(':', 'm')}s.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  $('raceStart').addEventListener('click', raceStart);
+  $('raceQuit').addEventListener('click', raceQuit);
 
   buildControls(); render();
   new ResizeObserver(render).observe(cv);
