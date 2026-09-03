@@ -1,0 +1,234 @@
+<title>추세선과 경사하강법</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --paper: oklch(0.975 0.012 85); --paper-2: oklch(0.945 0.016 85);
+    --ink: oklch(0.24 0.02 60); --ink-2: oklch(0.45 0.02 60); --rule: oklch(0.86 0.014 85);
+    --accent: oklch(0.56 0.15 45); --accent-soft: oklch(0.92 0.05 45);
+    --loss: oklch(0.45 0.13 300); --resid: oklch(0.6 0.1 45); --grid: oklch(0.9 0.012 85);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: oklch(0.21 0.015 60); --paper-2: oklch(0.26 0.018 60);
+      --ink: oklch(0.93 0.01 85); --ink-2: oklch(0.7 0.015 85); --rule: oklch(0.35 0.015 60);
+      --accent: oklch(0.76 0.14 45); --accent-soft: oklch(0.34 0.06 45);
+      --loss: oklch(0.75 0.12 300); --resid: oklch(0.7 0.1 45); --grid: oklch(0.29 0.012 60);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: oklch(0.21 0.015 60); --paper-2: oklch(0.26 0.018 60);
+    --ink: oklch(0.93 0.01 85); --ink-2: oklch(0.7 0.015 85); --rule: oklch(0.35 0.015 60);
+    --accent: oklch(0.76 0.14 45); --accent-soft: oklch(0.34 0.06 45);
+    --loss: oklch(0.75 0.12 300); --resid: oklch(0.7 0.1 45); --grid: oklch(0.29 0.012 60);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-size: clamp(15px, 1.1vw, 18px); line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: clamp(16px, 3vw, 40px) clamp(16px, 3vw, 32px) 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 24px; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+  h1 { font-family: "Gowun Batang", serif; font-weight: 700; font-size: clamp(28px, 3.4vw, 42px); margin: 0; }
+  .std { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .std span { font-size: 0.78em; padding: 2px 8px; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink-2); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 44px); margin-top: 22px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  h2 { font-family: "Gowun Batang", serif; font-size: 1.1em; margin: 0 0 6px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  h2 small { font-family: "IBM Plex Sans KR", sans-serif; font-weight: 400; font-size: 0.8em; color: var(--ink-2); }
+  canvas { width: 100%; display: block; background: var(--paper); border: 1px solid var(--rule); aspect-ratio: 1; cursor: crosshair; }
+  #lossc { cursor: default; }
+  .formula { font-family: "Gowun Batang", serif; font-size: clamp(26px, 2.8vw, 38px); font-weight: 700; margin: 10px 0 4px; color: var(--accent); }
+  .formula.l { color: var(--loss); font-size: clamp(20px, 2.2vw, 28px); }
+  .ctl { display: grid; grid-template-columns: 5.5em 1fr 5em; align-items: center; gap: 10px; margin: 8px 0; }
+  .ctl label { font-size: 0.95em; }
+  .ctl output { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+  input[type=range] { width: 100%; accent-color: var(--accent); height: 28px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  button, select { font: inherit; padding: 8px 14px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; border-radius: 4px; }
+  button.primary { background: var(--loss); border-color: var(--loss); color: var(--paper); font-weight: 500; }
+  button.ghost { border-color: var(--rule); color: var(--ink-2); }
+  button:hover { filter: brightness(1.08); }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .kv { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .kv div b { display: block; font-size: 0.78em; color: var(--ink-2); font-weight: 500; }
+  .kv div span { font-size: 1.15em; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-variant-numeric: tabular-nums; font-size: 0.9em; }
+  th, td { padding: 3px 8px; text-align: right; border-bottom: 1px solid var(--rule); }
+  th { font-weight: 500; color: var(--ink-2); font-size: 0.85em; }
+  .leg { display: flex; gap: 16px; font-size: 0.85em; color: var(--ink-2); margin-top: 6px; flex-wrap: wrap; }
+  .leg i { display: inline-block; width: 18px; height: 3px; background: var(--accent); vertical-align: middle; margin-right: 6px; }
+  .leg i.r { background: var(--resid); height: 2px; } .leg i.l { background: var(--loss); } .leg i.t { background: var(--ink); height: 2px; }
+  .hint { color: var(--ink-2); font-size: 0.85em; margin-top: 18px; border-top: 1px solid var(--rule); padding-top: 10px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>추세선과 경사하강법</h1>
+    <div class="std"><span>12인수04-02</span><span>12인수04-03</span><span>12인수04-04</span></div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <h2>데이터와 추세선 <small>빈 곳을 클릭하면 점이 추가됩니다</small></h2>
+      <canvas id="datac" width="560" height="560"></canvas>
+      <div class="leg"><span><i></i>추세선 y = ax</span><span><i class="r"></i>오차 (실제 − 예측)</span></div>
+      <div class="btns">
+        <select id="preset">
+          <option value="hours">공부 시간 → 점수 상승</option>
+          <option value="height">발 길이 → 키 (비례에 가까움)</option>
+          <option value="noisy">흩어진 데이터</option>
+          <option value="empty">빈 화면에서 시작</option>
+        </select>
+        <button class="ghost" id="clear">점 지우기</button>
+      </div>
+      <p class="formula" id="fx">y = 1.00x</p>
+      <div class="ctl"><label for="a">기울기 a</label><input type="range" id="a" min="0" max="3" step="0.01" value="0.3"><output id="ao">0.30</output></div>
+    </div>
+
+    <div>
+      <h2>손실함수 L(a) <small>a 값마다 오차 제곱의 평균</small></h2>
+      <canvas id="lossc" width="560" height="560"></canvas>
+      <div class="leg"><span><i class="l"></i>L(a)</span><span><i class="t"></i>현재 위치의 접선 (기울기 = L′(a))</span></div>
+      <p class="formula l" id="fl">L(a) = ⅟n Σ (yᵢ − a·xᵢ)²</p>
+      <div class="kv">
+        <div><b>현재 손실 L(a)</b><span id="L">–</span></div>
+        <div><b>접선의 기울기 L′(a)</b><span id="dL">–</span></div>
+        <div><b>최적의 a (정답)</b><span id="best">–</span></div>
+      </div>
+      <div class="ctl"><label for="lr">학습률 η</label><input type="range" id="lr" min="0.0005" max="0.05" step="0.0005" value="0.005"><output id="lro">0.0050</output></div>
+      <div class="btns">
+        <button class="primary" id="step">한 걸음 내려가기</button>
+        <button id="auto" aria-pressed="false">자동 실행</button>
+        <button class="ghost" id="restart">a를 다시 놓기</button>
+      </div>
+      <table id="log"><tr><th>단계</th><th>a</th><th>L(a)</th><th>L′(a)</th><th>a − η·L′(a)</th></tr></table>
+    </div>
+  </div>
+  <p class="hint">활동 예시: 슬라이더로 a를 움직이며 "언제 오차 선분들이 가장 짧아질까"를 먼저 감으로 찾고, 손실함수 그래프의 가장 낮은 곳과 비교. 접선의 기울기가 양수면 a를 줄이고 음수면 늘리는 규칙(a ← a − η·L′(a))을 표에서 확인. 학습률을 0.04 이상으로 올려 보면 어떤 일이 생길까? (교육과정: y = ax 형태 추세선, 일변수 손실함수, 이차함수의 미분계수는 직관적으로)</p>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const R = 10; // 데이터 좌표 0..10
+  const PRESETS = {
+    hours: [[1,1.2],[2,2.1],[2.5,3.4],[3,3.3],[4,4.9],[5,5.2],[6,7.4],[7,7.1],[8,9.0],[9,9.6]],
+    height: [[2,1.9],[3,3.2],[4,4.1],[5,4.8],[6,6.3],[7,6.9],[8,8.2],[9,8.8]],
+    noisy: [[1,3.5],[2,1.0],[3,4.8],[4,2.2],[5,6.9],[6,3.1],[7,8.0],[8,5.2],[9,9.4]],
+    empty: [],
+  };
+  let pts = PRESETS.hours.map(p => [...p]), a = 0.3, lr = 0.005, steps = 0, timer = null;
+
+  const loss = av => pts.length ? pts.reduce((s,[x,y]) => s + (y - av*x)**2, 0)/pts.length : 0;
+  const dloss = av => pts.length ? pts.reduce((s,[x,y]) => s - 2*x*(y - av*x), 0)/pts.length : 0;
+  const bestA = () => { const sxx = pts.reduce((s,[x]) => s + x*x, 0); return sxx ? pts.reduce((s,[x,y]) => s + x*y, 0)/sxx : 0; };
+  const fmt = (v, d = 2) => (Math.round(v*10**d)/10**d).toFixed(d).replace('-', '−');
+
+  function setup(c) {
+    const dpr = devicePixelRatio || 1, W = c.clientWidth || 560;
+    if (c.width !== W*dpr) { c.width = W*dpr; c.height = W*dpr; }
+    const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,W);
+    ctx.font = `${Math.max(11, W/44)}px "IBM Plex Sans KR", sans-serif`;
+    return { ctx, W };
+  }
+  function drawData() {
+    const { ctx, W } = setup($('datac'));
+    const P = 36, u = (W - P - 12)/R, X = x => P + x*u, Y = y => W - P - y*u;
+    ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1; ctx.fillStyle = css('--ink-2'); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let i = 0; i <= R; i++) {
+      ctx.beginPath(); ctx.moveTo(X(i), Y(0)); ctx.lineTo(X(i), Y(R)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(X(0), Y(i)); ctx.lineTo(X(R), Y(i)); ctx.stroke();
+      if (i) { ctx.fillText(i, X(i), Y(0) + 5); }
+    }
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; for (let i = 1; i <= R; i++) ctx.fillText(i, X(0) - 5, Y(i));
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(0), Y(R)); ctx.lineTo(X(0), Y(0)); ctx.lineTo(X(R), Y(0)); ctx.stroke();
+    ctx.font = `italic ${Math.max(14, W/32)}px "Gowun Batang", serif`; ctx.fillStyle = css('--ink');
+    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('x', X(R), Y(0) - 6);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('y', X(0) + 8, Y(R));
+    // 오차 선분
+    ctx.strokeStyle = css('--resid'); ctx.lineWidth = 2;
+    pts.forEach(([x,y]) => { ctx.beginPath(); ctx.moveTo(X(x), Y(y)); ctx.lineTo(X(x), Y(Math.max(0, Math.min(R, a*x)))); ctx.stroke(); });
+    // 추세선
+    ctx.strokeStyle = css('--accent'); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+    const xEnd = a > 1 ? R/a : R; ctx.lineTo(X(xEnd), Y(a*xEnd)); ctx.stroke();
+    // 점
+    ctx.fillStyle = css('--ink'); pts.forEach(([x,y]) => { ctx.beginPath(); ctx.arc(X(x), Y(y), 6, 0, 7); ctx.fill(); });
+    $('datac')._map = { P, u };
+  }
+  function drawLoss() {
+    const { ctx, W } = setup($('lossc'));
+    const P = 44, amin = 0, amax = 3;
+    const Lmax = Math.max(loss(amin), loss(amax), 1) * 1.05;
+    const X = av => P + (av - amin)/(amax - amin)*(W - P - 12), Y = L => W - P - L/Lmax*(W - P - 20);
+    ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1; ctx.fillStyle = css('--ink-2'); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let av = 0; av <= amax + 1e-9; av += 0.5) { ctx.beginPath(); ctx.moveTo(X(av), Y(0)); ctx.lineTo(X(av), Y(Lmax)); ctx.stroke(); ctx.fillText(av.toFixed(1), X(av), Y(0) + 5); }
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    const ystep = Lmax > 40 ? 10 : Lmax > 20 ? 5 : Lmax > 8 ? 2 : 1;
+    for (let L = 0; L <= Lmax; L += ystep) { ctx.beginPath(); ctx.moveTo(X(amin), Y(L)); ctx.lineTo(X(amax), Y(L)); ctx.stroke(); ctx.fillText(L, X(amin) - 5, Y(L)); }
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(amin), Y(Lmax)); ctx.lineTo(X(amin), Y(0)); ctx.lineTo(X(amax), Y(0)); ctx.stroke();
+    ctx.font = `italic ${Math.max(14, W/32)}px "Gowun Batang", serif`; ctx.fillStyle = css('--ink');
+    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('a', X(amax), Y(0) - 6);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('L(a)', X(amin) + 8, Y(Lmax));
+    if (!pts.length) return;
+    // 곡선
+    ctx.strokeStyle = css('--loss'); ctx.lineWidth = 3.5; ctx.beginPath();
+    for (let i = 0; i <= 200; i++) { const av = amin + (amax - amin)*i/200, y = Y(loss(av)); i ? ctx.lineTo(X(av), y) : ctx.moveTo(X(av), y); }
+    ctx.stroke();
+    // 최저점
+    const b = bestA(); if (b >= amin && b <= amax) { ctx.save(); ctx.strokeStyle = css('--ink-2'); ctx.setLineDash([4,5]); ctx.beginPath(); ctx.moveTo(X(b), Y(0)); ctx.lineTo(X(b), Y(loss(b))); ctx.stroke(); ctx.restore(); }
+    // 접선
+    const L0 = loss(a), d = dloss(a), da = 0.6;
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(a - da), Y(L0 - d*da)); ctx.lineTo(X(a + da), Y(L0 + d*da)); ctx.stroke();
+    // 현재 점
+    ctx.fillStyle = css('--accent'); ctx.beginPath(); ctx.arc(X(Math.min(amax, Math.max(amin, a))), Y(L0), 8, 0, 7); ctx.fill();
+    ctx.strokeStyle = css('--paper'); ctx.lineWidth = 2; ctx.stroke();
+    // 화살표: 다음 걸음 방향
+    if (Math.abs(d) > 1e-6) {
+      const na = a - lr*d; ctx.strokeStyle = css('--accent'); ctx.lineWidth = 2.5; ctx.beginPath();
+      ctx.moveTo(X(a), Y(0) - 14); ctx.lineTo(X(Math.min(amax, Math.max(amin, na))), Y(0) - 14); ctx.stroke();
+    }
+  }
+  function draw() {
+    drawData(); drawLoss();
+    $('fx').textContent = `y = ${fmt(a)}x`; $('ao').textContent = fmt(a); $('lro').textContent = lr.toFixed(4);
+    $('L').textContent = pts.length ? fmt(loss(a), 3) : '–';
+    $('dL').textContent = pts.length ? fmt(dloss(a), 3) : '–';
+    $('best').textContent = pts.length ? fmt(bestA(), 3) : '–';
+    $('a').value = Math.min(3, Math.max(0, a));
+  }
+  function step() {
+    if (!pts.length) return;
+    const L0 = loss(a), d = dloss(a), na = a - lr*d; steps++;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${steps}</td><td>${fmt(a,3)}</td><td>${fmt(L0,3)}</td><td>${fmt(d,3)}</td><td>${fmt(na,3)}</td>`;
+    const log = $('log'); log.insertBefore(tr, log.rows[1] || null); while (log.rows.length > 9) log.deleteRow(-1);
+    a = na;
+    if (!isFinite(a) || Math.abs(a) > 1e6) { stopAuto(); a = 0.3; }
+    draw();
+  }
+  function stopAuto() { if (timer) { clearInterval(timer); timer = null; } $('auto').setAttribute('aria-pressed', 'false'); $('auto').textContent = '자동 실행'; }
+  function clearLog() { steps = 0; const log = $('log'); while (log.rows.length > 1) log.deleteRow(-1); }
+
+  $('datac').addEventListener('click', e => {
+    const r = e.currentTarget.getBoundingClientRect(), m = e.currentTarget._map, W = r.width;
+    const x = (e.clientX - r.left - m.P)/m.u, y = (W - m.P - (e.clientY - r.top))/m.u;
+    if (x < 0 || x > R || y < 0 || y > R) return;
+    pts.push([+x.toFixed(2), +y.toFixed(2)]); $('preset').value = 'empty'; draw();
+  });
+  $('preset').addEventListener('change', e => { pts = PRESETS[e.target.value].map(p => [...p]); stopAuto(); clearLog(); draw(); });
+  $('clear').addEventListener('click', () => { pts = []; $('preset').value = 'empty'; stopAuto(); clearLog(); draw(); });
+  $('a').addEventListener('input', e => { a = +e.target.value; stopAuto(); draw(); });
+  $('lr').addEventListener('input', e => { lr = +e.target.value; draw(); });
+  $('step').addEventListener('click', () => { stopAuto(); step(); });
+  $('auto').addEventListener('click', () => {
+    if (timer) return stopAuto();
+    $('auto').setAttribute('aria-pressed', 'true'); $('auto').textContent = '멈추기';
+    timer = setInterval(() => { step(); if (Math.abs(dloss(a)) < 1e-4) stopAuto(); }, 350);
+  });
+  $('restart').addEventListener('click', () => { stopAuto(); clearLog(); a = Math.random() < .5 ? 0.2 : 2.7; draw(); });
+  new ResizeObserver(draw).observe($('datac'));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  draw();
+})();
+</script>

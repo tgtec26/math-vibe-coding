@@ -1,0 +1,219 @@
+<title>확률 실험실</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --paper: oklch(0.975 0.012 85); --paper-2: oklch(0.945 0.016 85);
+    --ink: oklch(0.24 0.02 60); --ink-2: oklch(0.45 0.02 60); --rule: oklch(0.86 0.014 85);
+    --accent: oklch(0.5 0.17 30); --accent-soft: oklch(0.9 0.05 30);
+    --theory: oklch(0.42 0.13 255); --grid: oklch(0.9 0.012 85);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: oklch(0.21 0.015 60); --paper-2: oklch(0.26 0.018 60);
+      --ink: oklch(0.93 0.01 85); --ink-2: oklch(0.7 0.015 85); --rule: oklch(0.35 0.015 60);
+      --accent: oklch(0.74 0.15 30); --accent-soft: oklch(0.34 0.07 30);
+      --theory: oklch(0.75 0.12 255); --grid: oklch(0.29 0.012 60);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: oklch(0.21 0.015 60); --paper-2: oklch(0.26 0.018 60);
+    --ink: oklch(0.93 0.01 85); --ink-2: oklch(0.7 0.015 85); --rule: oklch(0.35 0.015 60);
+    --accent: oklch(0.74 0.15 30); --accent-soft: oklch(0.34 0.07 30);
+    --theory: oklch(0.75 0.12 255); --grid: oklch(0.29 0.012 60);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-size: clamp(15px, 1.1vw, 18px); line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: clamp(16px, 3vw, 40px) clamp(16px, 3vw, 32px) 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 24px; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+  h1 { font-family: "Gowun Batang", serif; font-weight: 700; font-size: clamp(28px, 3.4vw, 42px); margin: 0; }
+  .std { display: flex; gap: 6px; margin-left: auto; }
+  .std span { font-size: 0.78em; padding: 2px 8px; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink-2); }
+  .top { display: grid; grid-template-columns: auto 1fr; gap: 20px 40px; align-items: center; margin-top: 22px; }
+  @media (max-width: 760px) { .top { grid-template-columns: 1fr; } }
+  select { font: inherit; padding: 6px 10px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); border-radius: 4px; }
+  .faces { font-size: clamp(54px, 7vw, 96px); line-height: 1; letter-spacing: 0.04em; min-height: 1em; color: var(--accent); font-family: "Gowun Batang", serif; }
+  .faces.coin { font-size: clamp(34px, 4.5vw, 60px); }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  button { font: inherit; padding: 9px 16px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; border-radius: 4px; font-variant-numeric: tabular-nums; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); font-weight: 500; }
+  button.ghost { border-color: var(--rule); color: var(--ink-2); }
+  button:hover { filter: brightness(1.08); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 36px; margin: 18px 0 6px; align-items: baseline; }
+  .stats div b { display: block; font-size: 0.8em; color: var(--ink-2); font-weight: 500; }
+  .stats div span { font-family: "Gowun Batang", serif; font-size: clamp(26px, 3vw, 40px); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stats .rel span { color: var(--accent); } .stats .th span { color: var(--theory); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 44px); margin-top: 20px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  h2 { font-family: "Gowun Batang", serif; font-size: 1.1em; margin: 0 0 8px; }
+  canvas { width: 100%; display: block; border: 1px solid var(--rule); background: var(--paper); }
+  #bars { aspect-ratio: 4 / 3; } #conv { aspect-ratio: 4 / 3; }
+  .leg { display: flex; gap: 16px; font-size: 0.85em; color: var(--ink-2); margin-top: 6px; }
+  .leg i { display: inline-block; width: 18px; height: 12px; background: var(--accent); vertical-align: -1px; margin-right: 6px; opacity: 0.85; }
+  .leg i.t { background: none; height: 0; border-top: 3px dashed var(--theory); vertical-align: 3px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-variant-numeric: tabular-nums; font-size: 0.95em; }
+  th, td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--rule); }
+  th { font-weight: 500; color: var(--ink-2); font-size: 0.85em; }
+  th:first-child, td:first-child { text-align: left; }
+  tr.hit td { background: var(--accent-soft); }
+  .ev { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .hint { color: var(--ink-2); font-size: 0.85em; margin-top: 18px; border-top: 1px solid var(--rule); padding-top: 10px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>확률 실험실</h1>
+    <div class="std"><span>9수04-06</span><span>12확통02-01</span></div>
+  </header>
+
+  <div class="top">
+    <div>
+      <label for="exp" style="display:block;font-size:.85em;color:var(--ink-2)">실험</label>
+      <select id="exp">
+        <option value="d1">주사위 1개 · 나온 눈</option>
+        <option value="d2">주사위 2개 · 눈의 합</option>
+        <option value="c3">동전 3개 · 앞면의 개수</option>
+      </select>
+      <div class="btns">
+        <button class="primary" data-n="1">1번 던지기</button>
+        <button data-n="10">+10</button>
+        <button data-n="100">+100</button>
+        <button data-n="1000">+1,000</button>
+        <button data-n="10000">+10,000</button>
+        <button data-n="100000">+100,000</button>
+        <button class="ghost" id="reset">처음부터</button>
+      </div>
+    </div>
+    <div class="faces" id="faces" aria-live="polite"></div>
+  </div>
+
+  <div class="stats">
+    <div><b>총 시행 횟수</b><span id="sN">0</span></div>
+    <div class="rel"><b>상대도수 <span id="evName"></span></b><span id="sRel">–</span></div>
+    <div class="th"><b>수학적 확률</b><span id="sTh">–</span></div>
+    <div><b>차이</b><span id="sDiff">–</span></div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <h2>결과별 상대도수</h2>
+      <canvas id="bars" width="600" height="450"></canvas>
+      <div class="leg"><span><i></i>실험 상대도수</span><span><i class="t"></i>수학적 확률</span></div>
+      <table id="tbl"></table>
+    </div>
+    <div>
+      <h2>시행 횟수가 늘어나면?</h2>
+      <div class="ev"><label for="evSel">관찰할 사건</label><select id="evSel"></select></div>
+      <canvas id="conv" width="600" height="450"></canvas>
+      <div class="leg"><span><i></i>상대도수의 변화</span><span><i class="t"></i>수학적 확률</span></div>
+      <p class="hint">활동 예시: 10번 던진 뒤 상대도수를 예상해 보고, 10만 번까지 늘리면서 그래프가 어디로 향하는지 관찰하기. "동전 3개에서 앞면 1개와 2개가 같은 확률인 이유"를 경우의 수로 설명하기. (교육과정 해설: 상대도수로서의 확률과 경우의 수의 비율로서의 확률을 연결)</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const EXP = {
+    d1: { name: '주사위 1개', outcomes: [1,2,3,4,5,6], label: v => `눈 ${v}`, prob: () => 1/6,
+          roll: () => { const r = 1 + Math.floor(Math.random()*6); return { v: r, show: [r] }; }, face: v => '⚀⚁⚂⚃⚄⚅'[v-1] },
+    d2: { name: '주사위 2개', outcomes: [2,3,4,5,6,7,8,9,10,11,12], label: v => `합 ${v}`, prob: v => (6 - Math.abs(v-7))/36,
+          roll: () => { const a = 1+Math.floor(Math.random()*6), b = 1+Math.floor(Math.random()*6); return { v: a+b, show: [a,b] }; }, face: v => '⚀⚁⚂⚃⚄⚅'[v-1] },
+    c3: { name: '동전 3개', outcomes: [0,1,2,3], label: v => `앞면 ${v}개`, prob: v => [1,3,3,1][v]/8,
+          roll: () => { const s = [0,0,0].map(() => Math.random() < .5 ? 1 : 0); return { v: s.reduce((a,b)=>a+b,0), show: s }; }, face: v => v ? '앞' : '뒤' },
+  };
+  let key = 'd1', E = EXP[key], counts, total, hist, evIdx;
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const bars = $('bars'), conv = $('conv');
+
+  function reset() {
+    E = EXP[key]; counts = Object.fromEntries(E.outcomes.map(o => [o, 0])); total = 0; hist = [];
+    $('faces').textContent = ''; $('faces').className = 'faces' + (key === 'c3' ? ' coin' : '');
+    const sel = $('evSel'); sel.innerHTML = E.outcomes.map((o,i) => `<option value="${i}">${E.label(o)}</option>`).join('');
+    evIdx = key === 'd2' ? 5 : key === 'c3' ? 1 : 5; sel.value = evIdx;
+    draw();
+  }
+  function run(n) {
+    let last;
+    const chunk = n <= 100 ? 1 : n <= 1000 ? 10 : 100;
+    for (let i = 0; i < n; i++) {
+      last = E.roll(); counts[last.v]++; total++;
+      if (total <= 100 || (i + 1) % chunk === 0 || i === n - 1) hist.push({ t: total, ...Object.fromEntries(E.outcomes.map(o => [o, counts[o]])) });
+    }
+    $('faces').textContent = n === 1 ? last.show.map(E.face).join(' ') : last.show.map(E.face).join(' ') + (n > 1 ? '' : '');
+    draw();
+  }
+
+  function draw() {
+    const ev = E.outcomes[evIdx], rel = total ? counts[ev]/total : null, th = E.prob(ev);
+    $('sN').textContent = total.toLocaleString();
+    $('evName').textContent = `(${E.label(ev)})`;
+    $('sRel').textContent = rel === null ? '–' : rel.toFixed(4);
+    $('sTh').textContent = th.toFixed(4) + `  (${fracOf(th)})`;
+    $('sDiff').textContent = rel === null ? '–' : (rel - th >= 0 ? '+' : '−') + Math.abs(rel - th).toFixed(4);
+    $('tbl').innerHTML = `<tr><th>결과</th><th>도수</th><th>상대도수</th><th>수학적 확률</th></tr>` +
+      E.outcomes.map(o => `<tr class="${o === ev ? 'hit' : ''}"><td>${E.label(o)}</td><td>${counts[o].toLocaleString()}</td><td>${total ? (counts[o]/total).toFixed(4) : '–'}</td><td>${fracOf(E.prob(o))} = ${E.prob(o).toFixed(4)}</td></tr>`).join('');
+    drawBars(); drawConv();
+  }
+  function fracOf(p) { for (const d of [6,36,8]) { const n = p*d; if (Math.abs(n - Math.round(n)) < 1e-9) { const g = gcd(Math.round(n), d); return `${Math.round(n)/g}/${d/g}`; } } return p.toFixed(3); }
+  const gcd = (a,b) => b ? gcd(b, a%b) : a;
+
+  function setup(c) {
+    const dpr = devicePixelRatio || 1, W = c.clientWidth || 600, H = W * 0.75;
+    if (c.width !== W*dpr) { c.width = W*dpr; c.height = H*dpr; }
+    const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    ctx.font = `${Math.max(11, W/46)}px "IBM Plex Sans KR", sans-serif`;
+    return { ctx, W, H };
+  }
+  function drawBars() {
+    const { ctx, W, H } = setup(bars);
+    const L = 44, Rr = 14, T = 16, B = 34, pw = W - L - Rr, ph = H - T - B;
+    const maxP = Math.max(...E.outcomes.map(E.prob)) * 1.35, ymax = Math.min(1, Math.ceil(maxP*10)/10);
+    const y = p => T + ph*(1 - p/ymax);
+    ctx.strokeStyle = css('--grid'); ctx.fillStyle = css('--ink-2'); ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.lineWidth = 1;
+    for (let p = 0; p <= ymax + 1e-9; p += 0.1) { ctx.beginPath(); ctx.moveTo(L, y(p)); ctx.lineTo(W-Rr, y(p)); ctx.stroke(); ctx.fillText(p.toFixed(1), L-6, y(p)); }
+    const n = E.outcomes.length, bw = pw/n, ev = E.outcomes[evIdx];
+    E.outcomes.forEach((o, i) => {
+      const x0 = L + i*bw + bw*0.18, w = bw*0.64;
+      if (total) { ctx.fillStyle = css('--accent'); ctx.globalAlpha = o === ev ? 1 : 0.55; ctx.fillRect(x0, y(counts[o]/total), w, y(0) - y(counts[o]/total)); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = css('--theory'); ctx.lineWidth = 3; ctx.setLineDash([6,4]);
+      ctx.beginPath(); ctx.moveTo(x0 - 4, y(E.prob(o))); ctx.lineTo(x0 + w + 4, y(E.prob(o))); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(String(o), x0 + w/2, y(0) + 6);
+    });
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(L, y(0)); ctx.lineTo(W-Rr, y(0)); ctx.stroke();
+  }
+  function drawConv() {
+    const { ctx, W, H } = setup(conv);
+    const L = 48, Rr = 14, T = 16, B = 34, pw = W - L - Rr, ph = H - T - B;
+    const ev = E.outcomes[evIdx], th = E.prob(ev);
+    const ymax = Math.min(1, Math.max(th*2.2, 0.3)), tmax = Math.max(1000, total);
+    const y = p => T + ph*(1 - p/ymax), x = t => L + pw * Math.log10(Math.max(1,t)) / Math.log10(tmax);
+    ctx.strokeStyle = css('--grid'); ctx.fillStyle = css('--ink-2'); ctx.lineWidth = 1;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let p = 0; p <= ymax + 1e-9; p += ymax > 0.5 ? 0.2 : 0.1) { ctx.beginPath(); ctx.moveTo(L, y(p)); ctx.lineTo(W-Rr, y(p)); ctx.stroke(); ctx.fillText(p.toFixed(1), L-6, y(p)); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let t = 1; t <= tmax; t *= 10) { ctx.beginPath(); ctx.moveTo(x(t), T); ctx.lineTo(x(t), y(0)); ctx.stroke(); ctx.fillText(t.toLocaleString(), x(t), y(0)+6); }
+    ctx.fillText('시행 횟수 (로그 눈금)', L + pw/2, y(0) + 20);
+    ctx.strokeStyle = css('--theory'); ctx.lineWidth = 2.5; ctx.setLineDash([8,6]);
+    ctx.beginPath(); ctx.moveTo(L, y(th)); ctx.lineTo(W-Rr, y(th)); ctx.stroke(); ctx.setLineDash([]);
+    if (hist.length) {
+      ctx.strokeStyle = css('--accent'); ctx.lineWidth = 2.5; ctx.beginPath();
+      hist.forEach((h, i) => { const px = x(h.t), py = y(Math.min(ymax, h[ev]/h.t)); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+      ctx.stroke();
+      const last = hist[hist.length-1]; ctx.fillStyle = css('--accent'); ctx.beginPath(); ctx.arc(x(last.t), y(Math.min(ymax,last[ev]/last.t)), 5, 0, 7); ctx.fill();
+    }
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(L, y(0)); ctx.lineTo(W-Rr, y(0)); ctx.stroke();
+  }
+
+  $('exp').addEventListener('change', e => { key = e.target.value; reset(); });
+  $('evSel').addEventListener('change', e => { evIdx = +e.target.value; draw(); });
+  $('reset').addEventListener('click', reset);
+  document.querySelectorAll('.btns button[data-n]').forEach(b => b.addEventListener('click', () => run(+b.dataset.n)));
+  new ResizeObserver(draw).observe(bars);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  reset();
+})();
+</script>

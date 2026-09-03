@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>표본과 신뢰구간</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --paper: oklch(0.975 0.012 85); --paper-2: oklch(0.945 0.016 85);
+    --ink: oklch(0.24 0.02 60); --ink-2: oklch(0.45 0.02 60); --rule: oklch(0.86 0.014 85);
+    --accent: oklch(0.48 0.12 165); --accent-soft: oklch(0.9 0.05 165);
+    --pop: oklch(0.6 0.02 60); --miss: oklch(0.55 0.18 30); --grid: oklch(0.9 0.012 85);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: oklch(0.21 0.015 60); --paper-2: oklch(0.26 0.018 60);
+      --ink: oklch(0.93 0.01 85); --ink-2: oklch(0.7 0.015 85); --rule: oklch(0.35 0.015 60);
+      --accent: oklch(0.75 0.12 165); --accent-soft: oklch(0.32 0.06 165);
+      --pop: oklch(0.6 0.02 60); --miss: oklch(0.72 0.16 30); --grid: oklch(0.29 0.012 60);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: oklch(0.21 0.015 60); --paper-2: oklch(0.26 0.018 60);
+    --ink: oklch(0.93 0.01 85); --ink-2: oklch(0.7 0.015 85); --rule: oklch(0.35 0.015 60);
+    --accent: oklch(0.75 0.12 165); --accent-soft: oklch(0.32 0.06 165);
+    --pop: oklch(0.6 0.02 60); --miss: oklch(0.72 0.16 30); --grid: oklch(0.29 0.012 60);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-size: clamp(15px, 1.1vw, 18px); line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: clamp(16px, 3vw, 40px) clamp(16px, 3vw, 32px) 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 24px; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+  h1 { font-family: "Gowun Batang", serif; font-weight: 700; font-size: clamp(28px, 3.4vw, 42px); margin: 0; }
+  .std { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .std span { font-size: 0.78em; padding: 2px 8px; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink-2); }
+  .panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 28px; margin: 20px 0 8px; align-items: end; }
+  label.f { display: block; font-size: 0.85em; color: var(--ink-2); margin-bottom: 4px; }
+  select, input[type=number] { font: inherit; padding: 6px 10px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); border-radius: 4px; width: 100%; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .val { font-family: "Gowun Batang", serif; font-weight: 700; font-size: 1.4em; font-variant-numeric: tabular-nums; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 4px; }
+  button { font: inherit; padding: 9px 16px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; border-radius: 4px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); font-weight: 500; }
+  button.ghost { border-color: var(--rule); color: var(--ink-2); }
+  button:hover { filter: brightness(1.08); }
+  h2 { font-family: "Gowun Batang", serif; font-size: 1.1em; margin: 26px 0 6px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  h2 small { font-family: "IBM Plex Sans KR", sans-serif; font-weight: 400; font-size: 0.8em; color: var(--ink-2); }
+  canvas { width: 100%; display: block; background: var(--paper); border: 1px solid var(--rule); }
+  #popc { aspect-ratio: 6 / 1.6; } #meansc { aspect-ratio: 6 / 2.2; } #cic { aspect-ratio: 6 / 3.2; }
+  .kv { display: flex; flex-wrap: wrap; gap: 6px 30px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .kv div b { display: block; font-size: 0.78em; color: var(--ink-2); font-weight: 500; }
+  .kv div span { font-size: 1.15em; }
+  .big { font-family: "Gowun Batang", serif; font-size: clamp(24px, 2.8vw, 36px); font-weight: 700; color: var(--accent); }
+  .leg { display: flex; gap: 16px; font-size: 0.85em; color: var(--ink-2); margin-top: 6px; flex-wrap: wrap; }
+  .leg i { display: inline-block; width: 18px; height: 3px; background: var(--accent); vertical-align: middle; margin-right: 6px; }
+  .leg i.m { background: var(--miss); } .leg i.p { background: var(--pop); } .leg i.d { border-top: 3px dashed var(--ink); background: none; height: 0; }
+  .hint { color: var(--ink-2); font-size: 0.85em; margin-top: 18px; border-top: 1px solid var(--rule); padding-top: 10px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>표본과 신뢰구간</h1>
+    <div class="std"><span>12확통03-05</span><span>12확통03-06</span><span>12확통03-07</span><span>12실통03-02</span></div>
+  </header>
+
+  <div class="panel">
+    <div>
+      <label class="f" for="preset">모집단</label>
+      <select id="preset">
+        <option value="173,6">고3 남학생 키 · μ=173cm, σ=6</option>
+        <option value="500,20">과자 한 봉지 무게 · μ=500g, σ=20</option>
+        <option value="65,12">수학 시험 점수 · μ=65점, σ=12</option>
+        <option value="custom">직접 입력</option>
+      </select>
+    </div>
+    <div><label class="f" for="mu">모평균 μ</label><input type="number" id="mu" value="173" step="1"></div>
+    <div><label class="f" for="sd">모표준편차 σ</label><input type="number" id="sd" value="6" step="0.5" min="0.5"></div>
+    <div>
+      <label class="f" for="n">표본의 크기 n = <span class="val" id="nv">25</span></label>
+      <input type="range" id="n" min="2" max="100" value="25">
+    </div>
+    <div>
+      <label class="f" for="conf">신뢰도</label>
+      <select id="conf"><option value="1.645">90%</option><option value="1.96" selected>95%</option><option value="2.576">99%</option></select>
+    </div>
+  </div>
+  <div class="btns">
+    <button class="primary" id="one">표본 1개 추출</button>
+    <button id="hundred">표본 100개 추출</button>
+    <button class="ghost" id="reset">처음부터</button>
+  </div>
+
+  <h2>모집단과 이번 표본 <small>점: 표본에 뽑힌 값 · 굵은 선: 표본평균</small></h2>
+  <canvas id="popc" width="1000" height="270"></canvas>
+  <div class="kv">
+    <div><b>이번 표본평균 x̄</b><span id="xbar">–</span></div>
+    <div><b>이번 신뢰구간</b><span id="ci">–</span></div>
+    <div><b>구간의 폭 = 2 × z × σ/√n</b><span id="width">–</span></div>
+  </div>
+
+  <h2>표본평균 x̄들의 분포 <small>여러 번 뽑을수록 어떤 모양이 될까?</small></h2>
+  <canvas id="meansc" width="1000" height="370"></canvas>
+  <div class="leg"><span><i></i>지금까지의 표본평균 히스토그램</span><span><i class="d"></i>이론: 평균 μ, 표준편차 σ/√n 인 정규분포</span><span><i class="p"></i>모집단 분포 (비교용)</span></div>
+  <div class="kv">
+    <div><b>뽑은 표본 수</b><span id="cnt">0</span></div>
+    <div><b>표본평균들의 평균</b><span id="mm">–</span> <small style="color:var(--ink-2)">(μ = <span id="mu2"></span>)</small></div>
+    <div><b>표본평균들의 표준편차</b><span id="ms">–</span> <small style="color:var(--ink-2)">(σ/√n = <span id="se"></span>)</small></div>
+  </div>
+
+  <h2>신뢰구간 100개 중 모평균을 포함하는 것은? <small>최근 100개 표본</small></h2>
+  <canvas id="cic" width="1000" height="530"></canvas>
+  <div class="leg"><span><i></i>μ를 포함</span><span><i class="m"></i>μ를 놓침</span></div>
+  <div class="kv"><div><b>포함 비율</b><span class="big" id="rate">–</span></div><div><b>전체 누적</b><span id="rateAll">–</span></div></div>
+
+  <p class="hint">활동 예시: n을 4 → 100으로 바꾸며 구간의 폭이 어떻게 변하는지 관찰(√n 의 역할). 신뢰도 99%로 올리면 무엇을 얻고 무엇을 잃는지 토론. "95% 신뢰구간"의 뜻을 "100개 뽑으면 약 95개가 μ를 포함한다"로 말해 보기. 모표준편차 σ는 알고 있다고 가정한 z-구간입니다.</p>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  let mu = 173, sd = 6, n = 25, z = 1.96;
+  let means = [], cis = [], last = null, hitAll = 0;
+
+  const randn = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
+  const pdf = (x, m, s) => Math.exp(-0.5*((x-m)/s)**2) / (s*Math.sqrt(2*Math.PI));
+
+  function readParams() {
+    mu = +$('mu').value || 0; sd = Math.max(0.5, +$('sd').value || 1); n = +$('n').value; z = +$('conf').value;
+    $('nv').textContent = n; $('mu2').textContent = mu; $('se').textContent = (sd/Math.sqrt(n)).toFixed(3);
+  }
+  function reset() { readParams(); means = []; cis = []; last = null; hitAll = 0; draw(); }
+  function sample() {
+    const xs = Array.from({ length: n }, () => mu + sd*randn());
+    const m = xs.reduce((a,b)=>a+b,0)/n, h = z*sd/Math.sqrt(n);
+    const hit = m - h <= mu && mu <= m + h; if (hit) hitAll++;
+    means.push(m); cis.push({ lo: m-h, hi: m+h, hit }); if (cis.length > 100) cis.shift();
+    last = { xs, m, h };
+  }
+
+  function setup(c, ratio) {
+    const dpr = devicePixelRatio || 1, W = c.clientWidth || 1000, H = W*ratio;
+    if (c.width !== W*dpr) { c.width = W*dpr; c.height = H*dpr; }
+    const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    ctx.font = `${Math.max(11, W/70)}px "IBM Plex Sans KR", sans-serif`;
+    return { ctx, W, H };
+  }
+  const lo = () => mu - 4*sd, hi = () => mu + 4*sd;
+  function axis(ctx, W, H, xOf, y0) {
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
+    ctx.fillStyle = css('--ink-2'); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const step = sd >= 4 ? sd : sd*2;
+    for (let k = -3; k <= 3; k++) { const v = mu + k*sd; ctx.fillText(+v.toFixed(1), xOf(v), y0 + 5); ctx.strokeStyle = css('--grid'); ctx.beginPath(); ctx.moveTo(xOf(v), 0); ctx.lineTo(xOf(v), y0); ctx.stroke(); }
+    ctx.save(); ctx.strokeStyle = css('--ink'); ctx.setLineDash([6,5]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(xOf(mu), 0); ctx.lineTo(xOf(mu), y0); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = css('--ink'); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `italic ${Math.max(13, W/55)}px "Gowun Batang", serif`; ctx.fillText('μ', xOf(mu) + 5, 4);
+  }
+
+  function drawPop() {
+    const { ctx, W, H } = setup($('popc'), 1.6/6);
+    const y0 = H - 24, xOf = v => (v - lo())/(hi() - lo())*W;
+    axis(ctx, W, H, xOf, y0);
+    const top = pdf(mu, mu, sd), yOf = p => y0 - (p/top)*(y0 - 26);
+    ctx.fillStyle = css('--pop'); ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.moveTo(0, y0);
+    for (let px = 0; px <= W; px += 2) ctx.lineTo(px, yOf(pdf(lo() + px/W*(hi()-lo()), mu, sd)));
+    ctx.lineTo(W, y0); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    if (last) {
+      ctx.fillStyle = css('--accent'); ctx.globalAlpha = 0.7;
+      last.xs.forEach(x => { ctx.beginPath(); ctx.arc(xOf(x), y0 - 10 - Math.random()*0, 4, 0, 7); ctx.fill(); });
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = css('--accent'); ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(xOf(last.m), 0); ctx.lineTo(xOf(last.m), y0); ctx.stroke();
+      ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(xOf(last.m - last.h), y0 - 22); ctx.lineTo(xOf(last.m + last.h), y0 - 22); ctx.stroke();
+      ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.font = `italic ${Math.max(13, W/55)}px "Gowun Batang", serif`;
+      ctx.fillText('x̄', xOf(last.m), y0 - 28);
+    }
+  }
+  function drawMeans() {
+    const { ctx, W, H } = setup($('meansc'), 2.2/6);
+    const y0 = H - 24, xOf = v => (v - lo())/(hi() - lo())*W, se = sd/Math.sqrt(n);
+    axis(ctx, W, H, xOf, y0);
+    const bins = 80, bw = (hi() - lo())/bins, cnt = new Array(bins).fill(0);
+    means.forEach(m => { const i = Math.floor((m - lo())/bw); if (i >= 0 && i < bins) cnt[i]++; });
+    const theoTop = pdf(mu, mu, se), maxDens = Math.max(theoTop, ...cnt.map(c => c/(means.length*bw) || 0)) * 1.05;
+    const yOf = d => y0 - (d/maxDens)*(y0 - 26);
+    ctx.fillStyle = css('--pop'); ctx.globalAlpha = 0.18; ctx.beginPath(); ctx.moveTo(0, y0);
+    for (let px = 0; px <= W; px += 2) ctx.lineTo(px, yOf(pdf(lo() + px/W*(hi()-lo()), mu, sd)));
+    ctx.lineTo(W, y0); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    if (means.length) {
+      ctx.fillStyle = css('--accent'); ctx.globalAlpha = 0.75;
+      cnt.forEach((c, i) => { if (!c) return; const d = c/(means.length*bw); ctx.fillRect(xOf(lo() + i*bw) + 0.5, yOf(d), W/bins - 1, y0 - yOf(d)); });
+      ctx.globalAlpha = 1;
+    }
+    ctx.save(); ctx.strokeStyle = css('--ink'); ctx.setLineDash([7,5]); ctx.lineWidth = 2; ctx.beginPath();
+    for (let px = 0; px <= W; px += 2) { const y = yOf(pdf(lo() + px/W*(hi()-lo()), mu, se)); px ? ctx.lineTo(px, y) : ctx.moveTo(px, y); }
+    ctx.stroke(); ctx.restore();
+  }
+  function drawCI() {
+    const { ctx, W, H } = setup($('cic'), 3.2/6);
+    const y0 = H - 24, xOf = v => (v - lo())/(hi() - lo())*W;
+    axis(ctx, W, H, xOf, y0);
+    const rows = 100, rh = (y0 - 10)/rows;
+    cis.forEach((c, i) => {
+      const y = 8 + i*rh;
+      ctx.strokeStyle = c.hit ? css('--accent') : css('--miss'); ctx.lineWidth = Math.max(1.5, rh*0.7);
+      ctx.beginPath(); ctx.moveTo(xOf(c.lo), y); ctx.lineTo(xOf(c.hi), y); ctx.stroke();
+    });
+  }
+  function draw() {
+    drawPop(); drawMeans(); drawCI();
+    const se = sd/Math.sqrt(n);
+    $('xbar').textContent = last ? last.m.toFixed(2) : '–';
+    $('ci').textContent = last ? `${(last.m - last.h).toFixed(2)} ≤ μ ≤ ${(last.m + last.h).toFixed(2)}` : '–';
+    $('width').textContent = `${(2*z*se).toFixed(2)}  (z = ${z})`;
+    $('cnt').textContent = means.length;
+    if (means.length) {
+      const mm = means.reduce((a,b)=>a+b,0)/means.length;
+      const ms = Math.sqrt(means.reduce((a,b)=>a+(b-mm)**2,0)/means.length);
+      $('mm').textContent = mm.toFixed(3); $('ms').textContent = means.length > 1 ? ms.toFixed(3) : '–';
+    } else { $('mm').textContent = '–'; $('ms').textContent = '–'; }
+    const hits = cis.filter(c => c.hit).length;
+    $('rate').textContent = cis.length ? `${cis.length}개 중 ${hits}개 (${(100*hits/cis.length).toFixed(0)}%)` : '–';
+    $('rateAll').textContent = means.length ? `${means.length}개 중 ${hitAll}개 (${(100*hitAll/means.length).toFixed(1)}%)` : '–';
+  }
+
+  $('preset').addEventListener('change', e => { if (e.target.value !== 'custom') { const [m, s] = e.target.value.split(','); $('mu').value = m; $('sd').value = s; } reset(); });
+  ['mu','sd'].forEach(id => $(id).addEventListener('change', () => { $('preset').value = 'custom'; reset(); }));
+  $('n').addEventListener('input', reset); $('conf').addEventListener('change', reset);
+  $('one').addEventListener('click', () => { readParams(); sample(); draw(); });
+  $('hundred').addEventListener('click', () => { readParams(); for (let i = 0; i < 100; i++) sample(); draw(); });
+  $('reset').addEventListener('click', reset);
+  new ResizeObserver(draw).observe($('popc'));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  reset();
+})();
+</script>
