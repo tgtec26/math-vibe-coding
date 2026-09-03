@@ -93,6 +93,29 @@
   .race p { margin: 0 0 10px; color: var(--ink-2); font-size: 0.95em; }
   .race input[type=text] { font: inherit; padding: 7px 10px; border: 1.5px solid var(--rule); background: var(--paper); color: var(--ink); border-radius: 4px; width: 9em; }
 
+  /* ---- 콤팩트: 1280×800 노트북·프로젝터에서 스크롤 없이 ---- */
+  @media (min-width: 900px) and (max-height: 860px) {
+    .wrap { padding: 12px 24px 14px; }
+    header { padding-bottom: 6px; gap: 8px 16px; }
+    h1 { font-size: 26px; }
+    .tabs { margin-top: 6px; } .tabs button { padding: 5px 14px; font-size: 0.95em; }
+    .grid { grid-template-columns: auto minmax(320px, 1fr); gap: 24px; margin-top: 10px; }
+    #cv { width: min(48vw, calc(100dvh - 165px)); }
+    .leg { margin-top: 4px; font-size: 0.78em; }
+    .formula { font-size: 28px; margin: 0 0 4px; }
+    .ctl { margin: 2px 0 4px; } .ctl label { font-size: 1.15em; } input[type=range] { height: 26px; }
+    .facts { margin-top: 6px; padding-top: 6px; gap: 2px 12px; } .facts b { font-size: 0.72em; } .facts span { font-size: 1em; }
+    #tbl { margin-top: 6px; font-size: 0.9em; } #tbl th, #tbl td { padding: 2px 6px; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .quest, .race { margin-top: 0; padding: 8px 12px 10px; }
+    .quest h2, .race h2 { font-size: 0.98em; margin-bottom: 4px; }
+    .quest p, .race p { display: none; }
+    .quest .msg { font-size: 0.82em; min-height: 0; }
+    .race input[type=text] { width: 6.5em; padding: 5px 8px; }
+    button.btn { padding: 6px 10px; font-size: 0.9em; }
+    .hint { display: none; }
+  }
+
   /* ---- 레이스 아레나 (전체 화면) ---- */
   body.racing { overflow: hidden; }
   #arena { position: fixed; inset: 0; z-index: 50; background: var(--paper); color: var(--ink); display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
@@ -168,6 +191,7 @@
       <div class="facts" id="facts"></div>
       <table id="tbl"></table>
 
+      <div class="actions">
       <section class="quest">
         <h2>도전 · 숨은 그래프 맞히기</h2>
         <p>점선 그래프와 똑같아지도록 슬라이더를 움직인 뒤 확인을 누르세요.</p>
@@ -186,6 +210,7 @@
           <button class="btn primary" id="raceStart">레이스 시작</button>
         </div>
       </section>
+      </div>
       <p class="hint">활동 예시: "기울기가 커지면 그래프는 어떻게 변할까?", "b만 바꾸면 무엇이 그대로일까?", 이차함수에서 "a의 부호와 최댓값·최솟값의 관계"를 말로 설명해 보기.</p>
     </div>
   </div>
