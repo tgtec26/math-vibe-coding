@@ -96,6 +96,7 @@
   /* ---- 레이스 아레나 (전체 화면) ---- */
   body.racing { overflow: hidden; }
   #arena { position: fixed; inset: 0; z-index: 50; background: var(--paper); color: var(--ink); display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+  #arena[hidden], #arDone[hidden] { display: none; }
   .ar-top { display: flex; align-items: center; gap: clamp(12px, 2vw, 28px); padding: 10px clamp(14px, 2.5vw, 28px); border-bottom: 2px solid var(--ink); }
   .dots { display: flex; gap: 8px; }
   .dots i { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid var(--ink-2); box-sizing: border-box; transition: background .25s, border-color .25s, transform .25s; }
