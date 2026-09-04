@@ -58,13 +58,28 @@
   .leg { display: flex; gap: 16px; font-size: 0.85em; color: var(--ink-2); margin-top: 6px; }
   .leg i { display: inline-block; width: 18px; height: 12px; background: var(--accent); vertical-align: -1px; margin-right: 6px; opacity: 0.85; }
   .leg i.t { background: none; height: 0; border-top: 3px dashed var(--theory); vertical-align: 3px; }
-  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-variant-numeric: tabular-nums; font-size: 0.95em; }
-  th, td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--rule); }
-  th { font-weight: 500; color: var(--ink-2); font-size: 0.85em; }
-  th:first-child, td:first-child { text-align: left; }
-  tr.hit td { background: var(--accent-soft); }
+  .tblwrap { overflow-x: auto; margin-top: 12px; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.95em; }
+  th, td { padding: 4px 8px; text-align: center; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  th { font-weight: 500; color: var(--ink-2); font-size: 0.85em; text-align: left; }
+  td.hit { background: var(--accent-soft); }
   .ev { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .hint { color: var(--ink-2); font-size: 0.85em; margin-top: 18px; border-top: 1px solid var(--rule); padding-top: 10px; }
+  /* ---- 콤팩트: 1280×800 노트북·프로젝터에서 스크롤 없이 ---- */
+  @media (min-width: 900px) and (max-height: 860px) {
+    .wrap { padding: 10px 24px 12px; }
+    header { padding-bottom: 6px; } h1 { font-size: 24px; }
+    .top { margin-top: 10px; gap: 10px 30px; }
+    .btns { margin-top: 8px; } button { padding: 6px 12px; font-size: 0.9em; }
+    .faces { font-size: 44px; } .faces.coin { font-size: 30px; }
+    .stats { margin: 10px 0 0; gap: 4px 28px; } .stats div span { font-size: 26px; }
+    .tblwrap { margin-top: 8px; } table { font-size: 0.85em; } th, td { padding: 2px 6px; }
+    .grid { margin-top: 10px; gap: 24px; } h2 { margin: 0 0 4px; font-size: 1em; }
+    .ev { margin: 0 0 6px; } .ev select { padding: 3px 8px; font-size: 0.9em; }
+    #bars, #conv { aspect-ratio: auto; height: clamp(160px, calc(100dvh - 475px), 420px); }
+    .leg { margin-top: 3px; font-size: 0.78em; }
+    .hint { display: none; }
+  }
 </style>
 
 <div class="wrap">
@@ -100,13 +115,13 @@
     <div class="th"><b>수학적 확률</b><span id="sTh">–</span></div>
     <div><b>차이</b><span id="sDiff">–</span></div>
   </div>
+  <div class="tblwrap"><table id="tbl"></table></div>
 
   <div class="grid">
     <div>
       <h2>결과별 상대도수</h2>
       <canvas id="bars" width="600" height="450"></canvas>
       <div class="leg"><span><i></i>실험 상대도수</span><span><i class="t"></i>수학적 확률</span></div>
-      <table id="tbl"></table>
     </div>
     <div>
       <h2>시행 횟수가 늘어나면?</h2>
@@ -158,15 +173,18 @@
     $('sRel').textContent = rel === null ? '–' : rel.toFixed(4);
     $('sTh').textContent = th.toFixed(4) + `  (${fracOf(th)})`;
     $('sDiff').textContent = rel === null ? '–' : (rel - th >= 0 ? '+' : '−') + Math.abs(rel - th).toFixed(4);
-    $('tbl').innerHTML = `<tr><th>결과</th><th>도수</th><th>상대도수</th><th>수학적 확률</th></tr>` +
-      E.outcomes.map(o => `<tr class="${o === ev ? 'hit' : ''}"><td>${E.label(o)}</td><td>${counts[o].toLocaleString()}</td><td>${total ? (counts[o]/total).toFixed(4) : '–'}</td><td>${fracOf(E.prob(o))} = ${E.prob(o).toFixed(4)}</td></tr>`).join('');
+    const row = (label, f) => `<tr><th>${label}</th>${E.outcomes.map(o => `<td class="${o === ev ? 'hit' : ''}">${f(o)}</td>`).join('')}</tr>`;
+    $('tbl').innerHTML = row(key === 'd1' ? '눈' : key === 'd2' ? '눈의 합' : '앞면 개수', o => o) +
+      row('도수', o => counts[o].toLocaleString()) +
+      row('상대도수', o => total ? (counts[o]/total).toFixed(3) : '–') +
+      row('수학적 확률', o => `${fracOf(E.prob(o))} = ${E.prob(o).toFixed(3)}`);
     drawBars(); drawConv();
   }
   function fracOf(p) { for (const d of [6,36,8]) { const n = p*d; if (Math.abs(n - Math.round(n)) < 1e-9) { const g = gcd(Math.round(n), d); return `${Math.round(n)/g}/${d/g}`; } } return p.toFixed(3); }
   const gcd = (a,b) => b ? gcd(b, a%b) : a;
 
   function setup(c) {
-    const dpr = devicePixelRatio || 1, W = c.clientWidth || 600, H = W * 0.75;
+    const dpr = devicePixelRatio || 1, W = c.clientWidth || 600, H = c.clientHeight || W * 0.75;
     if (c.width !== W*dpr) { c.width = W*dpr; c.height = H*dpr; }
     const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
     ctx.font = `${Math.max(11, W/46)}px "IBM Plex Sans KR", sans-serif`;

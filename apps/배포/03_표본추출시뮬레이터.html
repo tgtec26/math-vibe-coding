@@ -57,6 +57,22 @@
   .leg i { display: inline-block; width: 18px; height: 3px; background: var(--accent); vertical-align: middle; margin-right: 6px; }
   .leg i.m { background: var(--miss); } .leg i.p { background: var(--pop); } .leg i.d { border-top: 3px dashed var(--ink); background: none; height: 0; }
   .hint { color: var(--ink-2); font-size: 0.85em; margin-top: 18px; border-top: 1px solid var(--rule); padding-top: 10px; }
+  /* ---- 콤팩트: 1280×800 노트북·프로젝터에서 스크롤 없이 ---- */
+  @media (min-width: 900px) and (max-height: 860px) {
+    .wrap { padding: 10px 24px 12px; }
+    header { padding-bottom: 6px; } h1 { font-size: 24px; }
+    .panel { grid-template-columns: 1.5fr 0.6fr 0.6fr 1fr 0.6fr; gap: 8px 16px; margin: 8px 0 4px; }
+    label.f { font-size: 0.8em; margin-bottom: 2px; } select, input[type=number] { padding: 4px 8px; }
+    .btns { margin: 6px 0 0; } button { padding: 6px 12px; font-size: 0.9em; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; align-items: start; }
+    h2 { margin: 10px 0 4px; font-size: 1em; } h2 small { font-size: 0.78em; }
+    #popc { aspect-ratio: auto; height: clamp(110px, calc(45dvh - 200px), 220px); }
+    #meansc { aspect-ratio: auto; height: clamp(150px, calc(55dvh - 200px), 300px); }
+    #cic { aspect-ratio: auto; height: clamp(300px, calc(100dvh - 310px), 600px); }
+    .kv { gap: 2px 18px; margin-top: 4px; } .kv div span { font-size: 1em; } .kv div b { font-size: 0.72em; } .big { font-size: 22px; }
+    .leg { font-size: 0.78em; margin-top: 2px; }
+    .hint { display: none; }
+  }
 </style>
 
 <div class="wrap">
@@ -92,6 +108,7 @@
     <button class="ghost" id="reset">처음부터</button>
   </div>
 
+  <div class="cols"><div>
   <h2>모집단과 이번 표본 <small>점: 표본에 뽑힌 값 · 굵은 선: 표본평균</small></h2>
   <canvas id="popc" width="1000" height="270"></canvas>
   <div class="kv">
@@ -109,10 +126,12 @@
     <div><b>표본평균들의 표준편차</b><span id="ms">–</span> <small style="color:var(--ink-2)">(σ/√n = <span id="se"></span>)</small></div>
   </div>
 
+  </div><div>
   <h2>신뢰구간 100개 중 모평균을 포함하는 것은? <small>최근 100개 표본</small></h2>
   <canvas id="cic" width="1000" height="530"></canvas>
   <div class="leg"><span><i></i>μ를 포함</span><span><i class="m"></i>μ를 놓침</span></div>
   <div class="kv"><div><b>포함 비율</b><span class="big" id="rate">–</span></div><div><b>전체 누적</b><span id="rateAll">–</span></div></div>
+  </div></div>
 
   <p class="hint">활동 예시: n을 4 → 100으로 바꾸며 구간의 폭이 어떻게 변하는지 관찰(√n 의 역할). 신뢰도 99%로 올리면 무엇을 얻고 무엇을 잃는지 토론. "95% 신뢰구간"의 뜻을 "100개 뽑으면 약 95개가 μ를 포함한다"로 말해 보기. 모표준편차 σ는 알고 있다고 가정한 z-구간입니다.</p>
 </div>
@@ -141,7 +160,7 @@
   }
 
   function setup(c, ratio) {
-    const dpr = devicePixelRatio || 1, W = c.clientWidth || 1000, H = W*ratio;
+    const dpr = devicePixelRatio || 1, W = c.clientWidth || 1000, H = c.clientHeight || W*ratio;
     if (c.width !== W*dpr) { c.width = W*dpr; c.height = H*dpr; }
     const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
     ctx.font = `${Math.max(11, W/70)}px "IBM Plex Sans KR", sans-serif`;

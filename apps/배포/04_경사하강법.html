@@ -63,6 +63,21 @@
   .leg i { display: inline-block; width: 18px; height: 3px; background: var(--accent); vertical-align: middle; margin-right: 6px; }
   .leg i.r { background: var(--resid); height: 2px; } .leg i.l { background: var(--loss); } .leg i.t { background: var(--ink); height: 2px; }
   .hint { color: var(--ink-2); font-size: 0.85em; margin-top: 18px; border-top: 1px solid var(--rule); padding-top: 10px; }
+  /* ---- 콤팩트: 1280×800 노트북·프로젝터에서 스크롤 없이 ---- */
+  @media (min-width: 900px) and (max-height: 860px) {
+    .wrap { padding: 10px 24px 12px; }
+    header { padding-bottom: 6px; } h1 { font-size: 24px; }
+    .grid { margin-top: 10px; gap: 24px; }
+    h2 { font-size: 1em; margin-bottom: 4px; } h2 small { font-size: 0.78em; }
+    #datac, #lossc { width: min(100%, calc(100dvh - 410px)); margin: 0 auto; }
+    .leg { font-size: 0.78em; margin-top: 3px; }
+    .btns { margin: 6px 0; } button, select { padding: 6px 10px; font-size: 0.9em; }
+    .formula { font-size: 26px; margin: 6px 0 2px; } .formula.l { font-size: 18px; }
+    .ctl { margin: 4px 0; } input[type=range] { height: 24px; }
+    .kv { gap: 2px 18px; margin-top: 2px; } .kv div span { font-size: 1em; } .kv div b { font-size: 0.72em; }
+    table { margin-top: 6px; font-size: 0.82em; } th, td { padding: 1px 6px; }
+    .hint { display: none; }
+  }
 </style>
 
 <div class="wrap">
@@ -206,7 +221,8 @@
     const L0 = loss(a), d = dloss(a), na = a - lr*d; steps++;
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${steps}</td><td>${fmt(a,3)}</td><td>${fmt(L0,3)}</td><td>${fmt(d,3)}</td><td>${fmt(na,3)}</td>`;
-    const log = $('log'); log.insertBefore(tr, log.rows[1] || null); while (log.rows.length > 9) log.deleteRow(-1);
+    const log = $('log'), maxRows = matchMedia('(max-height: 860px)').matches ? 6 : 9;
+    log.insertBefore(tr, log.rows[1] || null); while (log.rows.length > maxRows) log.deleteRow(-1);
     a = na;
     if (!isFinite(a) || Math.abs(a) > 1e6) { stopAuto(); a = 0.3; }
     draw();
